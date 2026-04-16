@@ -1516,9 +1516,11 @@ function burnElement(sym) {
 
     t++;
     if (phase === 0 && t >= DIP_FRAMES) { phase = 1; t = 0; }
-    if (phase === 1 && t < BURN_FRAMES) {
+    if (phase === 0) {
       burnAnimFrame = requestAnimationFrame(frame);
-    } else if (phase === 1) {
+    } else if (phase === 1 && t < BURN_FRAMES) {
+      burnAnimFrame = requestAnimationFrame(frame);
+    } else {
       updateSpectraDisplay(sym);
       checkMysteryReveal();
     }
