@@ -1680,7 +1680,12 @@ function initStars() {
         '<canvas id="' + canvasId + '" style="width:100%;height:60px;display:block;" height="60"></canvas>' +
       '</div>' +
       '<div class="wl-ruler" style="margin-bottom:14px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
-      '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:8px;">COMPARE TO ELEMENTS — CHECK ALL THAT MATCH THE STAR\'S SPECTRUM:</div>' +
+      '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:6px;">COMPARE ELEMENTS</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">' +
+        '<strong style="color:var(--accent);">How to identify:</strong> Tap any element below — it will jump to the top, directly under the star\'s spectrum, so you can line up the bright emission lines side by side. ' +
+        'When an element\'s lines appear at the same positions as the star\'s lines, that element is present. ' +
+        'Check every matching element, then tap <strong style="color:var(--accent2);">IDENTIFY ELEMENTS</strong> when you\'re done.' +
+      '</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;" id="scl-' + star.id + '">' +
         elemCardsHtml +
       '</div>' +
@@ -1734,6 +1739,24 @@ function toggleStarCheck(starId, sym) {
     box.style.background = 'var(--accent)';
     box.style.borderColor = 'var(--accent)';
     box.style.color = '#000';
+  }
+
+  // Move this element to the top of the list so it sits directly
+  // under the star spectrum for immediate side-by-side comparison
+  var list = document.getElementById('scl-' + starId);
+  if (list) {
+    list.insertBefore(item, list.firstChild);
+    // Redraw its canvas after the DOM move (layout may have changed)
+    setTimeout(function() {
+      var ec = document.getElementById('espec-' + starId + '-' + sym);
+      if (ec) {
+        ec.width = ec.offsetWidth || 320;
+        drawEmissionLines(ec, ELEMENTS[sym].lines);
+      }
+      // Scroll so the star spectrum is at the top of the viewport
+      var sc = document.getElementById('star-canvas-' + starId);
+      if (sc) sc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 }
 
