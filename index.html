@@ -1654,12 +1654,16 @@ function initStars() {
       var el = ELEMENTS[sym];
       elemCardsHtml +=
         '<div class="elem-compare-card" id="sc-' + star.id + '-' + sym + '" onclick="toggleStarCheck(\'' + star.id + '\',\'' + sym + '\')">' +
-          '<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;font-weight:700;color:' + el.flame + ';">' + sym + '</div>' +
-          '<div style="background:#000;border-radius:3px;overflow:hidden;margin:3px 0 2px;">' +
-            '<canvas id="espec-' + star.id + '-' + sym + '" style="width:100%;height:22px;display:block;" height="22"></canvas>' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+            '<div>' +
+              '<span style="font-family:\'Orbitron\',sans-serif;font-size:12px;font-weight:700;color:' + el.flame + ';">' + sym + '</span>' +
+              '<span style="font-size:11px;color:var(--dim);font-family:\'Share Tech Mono\',monospace;margin-left:6px;">' + el.name + '</span>' +
+            '</div>' +
+            '<div style="width:16px;height:16px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;" id="sb-' + star.id + '-' + sym + '"></div>' +
           '</div>' +
-          '<div style="font-size:8px;color:var(--dim);font-family:\'Share Tech Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + el.name + '</div>' +
-          '<div style="width:14px;height:14px;border:1px solid var(--border);border-radius:3px;margin:3px auto 0;display:flex;align-items:center;justify-content:center;font-size:10px;" id="sb-' + star.id + '-' + sym + '"></div>' +
+          '<div style="background:#000;border-radius:3px;overflow:hidden;">' +
+            '<canvas id="espec-' + star.id + '-' + sym + '" style="width:100%;height:60px;display:block;" height="60"></canvas>' +
+          '</div>' +
         '</div>';
     });
 
@@ -1677,7 +1681,7 @@ function initStars() {
       '</div>' +
       '<div class="wl-ruler" style="margin-bottom:14px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
       '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:8px;">COMPARE TO ELEMENTS — CHECK ALL THAT MATCH THE STAR\'S SPECTRUM:</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px;" id="scl-' + star.id + '">' +
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;" id="scl-' + star.id + '">' +
         elemCardsHtml +
       '</div>' +
       '<div class="feedback-box" id="sfb-' + star.id + '"></div>' +
@@ -1701,7 +1705,7 @@ function initStars() {
         Object.keys(ELEMENTS).forEach(function(sym) {
           var ec = document.getElementById('espec-' + s.id + '-' + sym);
           if (ec) {
-            ec.width = ec.offsetWidth || 90;
+            ec.width = ec.offsetWidth || 320;
             drawEmissionLines(ec, ELEMENTS[sym].lines);
           }
         });
