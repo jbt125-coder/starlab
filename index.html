@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Spectral Fingerprints Lab</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+
+:root {
+–bg: #050a14;
+–panel: #0a1628;
+–border: #1a3a6a;
+–accent: #00d4ff;
+–accent2: #ff6b35;
+–accent3: #7fff7f;
+–text: #c8d8f0;
+–dim: #4a6080;
+–glow: 0 0 12px #00d4ff88;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: #000;
+color: var(–text);
+font-family: ‘Exo 2’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Starfield canvas */
+#starfield {
+position: fixed;
+inset: 0;
+width: 100%;
+height: 100%;
+pointer-events: none;
+z-index: 0;
+}
+
+.screen {
+display: none;
+position: fixed;
+inset: 0;
+z-index: 1;
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+}
+.screen.active { display: block; }
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+padding: 30px 20px 40px;
+}
+#title-screen.active {
+display: flex !important;
+flex-direction: column;
+align-items: center;
+}
+
+.lab-header {
+text-align: center;
+margin-bottom: 30px;
+}
+
+.lab-subtitle {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 11px;
+letter-spacing: 4px;
+color: var(–accent);
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+
+.lab-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 26px;
+font-weight: 900;
+color: #fff;
+text-shadow: 0 0 20px #00d4ffaa, 0 0 40px #00d4ff44;
+line-height: 1.1;
+margin-bottom: 6px;
+}
+
+.lab-title span { color: var(–accent); }
+
+.spectrum-banner {
+width: 100%;
+height: 18px;
+border-radius: 4px;
+margin: 16px 0;
+background: linear-gradient(to right,
+#7f00ff 0%, #4400ff 8%, #0000ff 16%,
+#0044ff 20%, #0088ff 25%,
+#00ccff 30%, #00ffcc 38%,
+#00ff88 43%, #00ff00 48%,
+#88ff00 53%, #ccff00 58%,
+#ffff00 63%, #ffcc00 68%,
+#ff8800 73%, #ff4400 80%,
+#ff0000 87%, #cc0000 93%, #880000 100%);
+box-shadow: 0 0 15px #ffffff33;
+}
+
+.input-panel {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 20px;
+width: 100%;
+max-width: 380px;
+margin-bottom: 24px;
+}
+
+.input-panel label {
+display: block;
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 11px;
+letter-spacing: 2px;
+color: var(–accent);
+text-transform: uppercase;
+margin-bottom: 6px;
+margin-top: 14px;
+}
+.input-panel label:first-child { margin-top: 0; }
+
+.input-panel input, .input-panel select {
+width: 100%;
+background: #0a1e3a;
+border: 1px solid var(–border);
+border-radius: 6px;
+color: #fff;
+font-family: ‘Exo 2’, sans-serif;
+font-size: 16px;
+padding: 10px 12px;
+outline: none;
+}
+.input-panel input:focus, .input-panel select:focus {
+border-color: var(–accent);
+box-shadow: var(–glow);
+}
+.input-panel select option { background: #0a1628; }
+
+.section-buttons {
+width: 100%;
+max-width: 380px;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.section-btn {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px 20px;
+text-align: left;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+overflow: hidden;
+}
+.section-btn.locked {
+opacity: 0.4;
+cursor: not-allowed;
+}
+.section-btn:not(.locked):active {
+transform: scale(0.97);
+}
+.section-btn::before {
+content: ‘’;
+position: absolute;
+left: 0; top: 0; bottom: 0;
+width: 3px;
+border-radius: 3px 0 0 3px;
+}
+.section-btn.s1::before { background: var(–accent); }
+.section-btn.s2::before { background: var(–accent2); }
+.section-btn.s3::before { background: var(–accent3); }
+.section-btn.quiz-btn::before { background: #ff00ff; }
+
+.btn-num {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 10px;
+letter-spacing: 2px;
+color: var(–dim);
+text-transform: uppercase;
+margin-bottom: 4px;
+}
+.btn-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 14px;
+font-weight: 700;
+color: #fff;
+margin-bottom: 3px;
+}
+.btn-desc {
+font-size: 12px;
+color: var(–dim);
+line-height: 1.3;
+}
+.lock-icon {
+position: absolute;
+right: 16px;
+top: 50%;
+transform: translateY(-50%);
+font-size: 18px;
+opacity: 0.5;
+}
+.done-badge {
+position: absolute;
+right: 16px;
+top: 50%;
+transform: translateY(-50%);
+background: var(–accent3);
+color: #000;
+font-size: 10px;
+font-weight: 700;
+font-family: ‘Share Tech Mono’, monospace;
+padding: 3px 8px;
+border-radius: 10px;
+letter-spacing: 1px;
+}
+
+/* ===== SHARED NAV ===== */
+.top-nav {
+display: flex;
+align-items: center;
+padding: 16px 20px 8px;
+gap: 12px;
+position: sticky;
+top: 0;
+background: #000;
+z-index: 10;
+border-bottom: 1px solid var(–border);
+}
+.back-btn {
+background: none;
+border: 1px solid var(–border);
+border-radius: 6px;
+color: var(–accent);
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 12px;
+padding: 6px 12px;
+cursor: pointer;
+letter-spacing: 1px;
+}
+.nav-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 13px;
+font-weight: 700;
+color: #fff;
+flex: 1;
+}
+
+.section-content {
+padding: 20px;
+max-width: 500px;
+margin: 0 auto;
+}
+
+/* ===== CONTENT STYLES ===== */
+.info-card {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px;
+margin-bottom: 16px;
+}
+.info-card h2 {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 14px;
+font-weight: 700;
+color: var(–accent);
+margin-bottom: 10px;
+letter-spacing: 1px;
+}
+.info-card p {
+font-size: 13px;
+line-height: 1.6;
+color: var(–text);
+margin-bottom: 8px;
+}
+.info-card p:last-child { margin-bottom: 0; }
+
+/* EM Spectrum canvas */
+#em-canvas {
+width: 100%;
+height: 80px;
+border-radius: 6px;
+display: block;
+margin: 10px 0;
+}
+
+/* Spectra display */
+.spectra-display {
+background: #000;
+border: 1px solid #333;
+border-radius: 6px;
+position: relative;
+overflow: hidden;
+margin: 10px 0;
+}
+
+/* ===== SECTION 2: FLAME TEST ===== */
+.element-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 8px;
+margin-bottom: 16px;
+}
+.elem-btn {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 6px;
+text-align: center;
+cursor: pointer;
+transition: all 0.15s;
+}
+.elem-btn:active { transform: scale(0.95); }
+.elem-btn.selected {
+border-color: var(–accent);
+box-shadow: var(–glow);
+}
+.elem-symbol {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 18px;
+font-weight: 700;
+}
+.elem-name {
+font-size: 10px;
+color: var(–dim);
+margin-top: 2px;
+font-family: ‘Share Tech Mono’, monospace;
+}
+
+#flame-canvas {
+display: block;
+width: 100%;
+}
+
+#spectra-canvas {
+display: block;
+width: 100%;
+height: 70px;
+}
+
+/* Mystery sample */
+.mystery-checklist {
+display: flex;
+flex-direction: column;
+gap: 8px;
+margin: 12px 0;
+}
+.check-item {
+display: flex;
+align-items: center;
+gap: 10px;
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 14px;
+cursor: pointer;
+transition: all 0.15s;
+}
+.check-item.checked {
+border-color: var(–accent);
+background: #001830;
+}
+.check-box {
+width: 18px;
+height: 18px;
+border: 2px solid var(–border);
+border-radius: 4px;
+flex-shrink: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 12px;
+}
+.check-item.checked .check-box {
+border-color: var(–accent);
+background: var(–accent);
+color: #000;
+}
+
+/* ===== SECTION 3: STARS ===== */
+.star-card {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px;
+margin-bottom: 16px;
+}
+.star-name {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 15px;
+font-weight: 700;
+color: #fff;
+margin-bottom: 4px;
+}
+.star-desc {
+font-size: 12px;
+color: var(–dim);
+margin-bottom: 12px;
+font-family: ‘Share Tech Mono’, monospace;
+}
+
+#redshift-canvas {
+display: block;
+width: 100%;
+height: 120px;
+}
+.slider-wrap {
+padding: 0 4px;
+margin-top: 10px;
+}
+.slider-wrap input[type=range] {
+width: 100%;
+accent-color: var(–accent);
+}
+.shift-label {
+text-align: center;
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 12px;
+color: var(–accent);
+margin-top: 4px;
+}
+
+/* ===== ACTION BUTTONS ===== */
+.action-btn {
+display: block;
+width: 100%;
+background: linear-gradient(135deg, #003060, #001840);
+border: 1px solid var(–accent);
+border-radius: 10px;
+color: var(–accent);
+font-family: ‘Orbitron’, sans-serif;
+font-size: 13px;
+font-weight: 700;
+letter-spacing: 2px;
+padding: 14px;
+text-align: center;
+cursor: pointer;
+margin: 16px 0;
+transition: all 0.2s;
+box-shadow: var(–glow);
+}
+.action-btn:active { transform: scale(0.97); }
+.action-btn.orange {
+border-color: var(–accent2);
+color: var(–accent2);
+box-shadow: 0 0 12px #ff6b3588;
+background: linear-gradient(135deg, #301000, #180800);
+}
+.action-btn.green {
+border-color: var(–accent3);
+color: var(–accent3);
+box-shadow: 0 0 12px #7fff7f88;
+background: linear-gradient(135deg, #003010, #001808);
+}
+
+/* ===== FEEDBACK ===== */
+.feedback-box {
+border-radius: 8px;
+padding: 12px 14px;
+font-size: 13px;
+line-height: 1.5;
+margin: 10px 0;
+display: none;
+}
+.feedback-box.correct {
+background: #003318;
+border: 1px solid #00aa44;
+color: #7fff7f;
+display: block;
+}
+.feedback-box.wrong {
+background: #330808;
+border: 1px solid #aa0000;
+color: #ff8888;
+display: block;
+}
+.feedback-box.nudge {
+background: #1a1400;
+border: 1px solid #aa7700;
+color: #ffcc44;
+display: block;
+}
+
+/* ===== QUIZ ===== */
+.quiz-q {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px;
+margin-bottom: 16px;
+}
+.q-num {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 10px;
+letter-spacing: 2px;
+color: var(–accent);
+margin-bottom: 8px;
+}
+.q-text {
+font-size: 14px;
+font-weight: 600;
+color: #fff;
+margin-bottom: 14px;
+line-height: 1.4;
+}
+.q-options {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.q-option {
+background: #0a1e3a;
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 14px;
+font-size: 13px;
+color: var(–text);
+cursor: pointer;
+transition: all 0.15s;
+text-align: left;
+}
+.q-option.selected { border-color: var(–accent); background: #001c3a; color: #fff; }
+.q-option.correct-ans { border-color: var(–accent3); background: #002810; color: var(–accent3); }
+.q-option.wrong-ans { border-color: #ff4444; background: #200000; color: #ff8888; }
+.q-option:disabled { cursor: default; }
+
+/* ===== SCORE SCREEN ===== */
+#score-screen.active { display: block; }
+
+.score-card {
+background: var(–panel);
+border: 2px solid var(–accent);
+border-radius: 16px;
+padding: 28px 20px;
+text-align: center;
+margin: 20px;
+box-shadow: 0 0 30px #00d4ff44;
+}
+.score-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 12px;
+letter-spacing: 3px;
+color: var(–dim);
+text-transform: uppercase;
+margin-bottom: 16px;
+}
+.score-name {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 22px;
+font-weight: 900;
+color: #fff;
+text-shadow: 0 0 15px #00d4ffaa;
+margin-bottom: 4px;
+}
+.score-period {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 13px;
+color: var(–accent);
+letter-spacing: 2px;
+margin-bottom: 20px;
+}
+.score-big {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 56px;
+font-weight: 900;
+line-height: 1;
+margin-bottom: 6px;
+}
+.score-out-of {
+font-size: 14px;
+color: var(–dim);
+margin-bottom: 20px;
+}
+.score-msg {
+font-size: 14px;
+color: var(–text);
+line-height: 1.5;
+margin-bottom: 20px;
+padding: 0 10px;
+}
+.screenshot-note {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 11px;
+color: var(–accent);
+letter-spacing: 1px;
+background: #001830;
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 14px;
+line-height: 1.5;
+}
+.score-spectrum {
+width: 100%;
+height: 14px;
+border-radius: 4px;
+margin: 20px 0 8px;
+background: linear-gradient(to right,
+#7f00ff, #0000ff, #0088ff, #00ffcc,
+#00ff00, #ffff00, #ff8800, #ff0000);
+}
+
+/* Dividers */
+.divider {
+border: none;
+border-top: 1px solid var(–border);
+margin: 16px 0;
+}
+
+.tag {
+display: inline-block;
+background: #001830;
+border: 1px solid var(–border);
+border-radius: 4px;
+padding: 2px 8px;
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 10px;
+color: var(–accent);
+letter-spacing: 1px;
+margin: 2px;
+}
+
+/* Wavelength ruler */
+.wl-ruler {
+display: flex;
+justify-content: space-between;
+padding: 0 2px;
+margin-top: 2px;
+}
+.wl-ruler span {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 9px;
+color: var(–dim);
+}
+
+/* ===== NOTES LOG ===== */
+#notes-btn {
+position: fixed;
+bottom: 22px;
+right: 18px;
+width: 50px;
+height: 50px;
+border-radius: 50%;
+background: linear-gradient(135deg, #001840, #003060);
+border: 2px solid var(–accent);
+color: var(–accent);
+font-size: 22px;
+cursor: pointer;
+z-index: 100;
+display: none;
+align-items: center;
+justify-content: center;
+box-shadow: 0 0 16px #00d4ff66;
+}
+#notes-btn.visible { display: flex; }
+
+#notes-panel {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.92);
+z-index: 200;
+display: none;
+flex-direction: column;
+overflow: hidden;
+}
+#notes-panel.open { display: flex; }
+
+.notes-header {
+display: flex;
+align-items: center;
+padding: 16px 20px;
+border-bottom: 1px solid var(–border);
+background: #000;
+flex-shrink: 0;
+}
+.notes-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 14px;
+font-weight: 700;
+color: var(–accent);
+flex: 1;
+letter-spacing: 2px;
+}
+.notes-close {
+background: none;
+border: 1px solid var(–border);
+border-radius: 6px;
+color: var(–text);
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 12px;
+padding: 6px 12px;
+cursor: pointer;
+}
+.notes-body {
+flex: 1;
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+padding: 16px 20px 40px;
+}
+.note-section {
+margin-bottom: 20px;
+}
+.note-section-title {
+font-family: ‘Orbitron’, sans-serif;
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 2px;
+color: var(–accent);
+text-transform: uppercase;
+margin-bottom: 10px;
+padding-bottom: 4px;
+border-bottom: 1px solid var(–border);
+}
+.note-item {
+background: var(–panel);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 10px 12px;
+margin-bottom: 8px;
+font-size: 12px;
+line-height: 1.5;
+color: var(–text);
+}
+.note-item strong { color: var(–accent); }
+.note-item .tag { font-size: 10px; }
+.note-diagram {
+display: block;
+width: 100%;
+border-radius: 6px;
+margin: 6px 0 2px;
+background: #000;
+}
+
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+
+<!-- ===== TITLE SCREEN ===== -->
+
+<div id="title-screen" class="screen active">
+  <div class="lab-header" style="width:100%;max-width:380px;">
+    <div class="lab-subtitle">High School Science Lab</div>
+    <div class="lab-title">Spectral<br><span>Fingerprints</span></div>
+    <div class="spectrum-banner"></div>
+    <div style="font-size:12px;color:var(--dim);text-align:center;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">Identifying Elements Through Light</div>
+  </div>
+
+  <div class="input-panel">
+    <label>Student Name</label>
+    <input type="text" id="student-name" placeholder="First Last" autocomplete="off" />
+    <label>Class Period</label>
+    <select id="student-period">
+      <option value="">-- Select Period --</option>
+      <option>Period 1</option>
+      <option>Period 2</option>
+      <option>Period 3</option>
+      <option>Period 4</option>
+      <option>Period 5</option>
+      <option>Period 6</option>
+      <option>Period 7</option>
+    </select>
+  </div>
+
+  <div class="section-buttons">
+    <div class="section-btn s1" id="btn-s1" onclick="goSection(1)">
+      <div class="btn-num">Section 01</div>
+      <div class="btn-title">The Spectrum Explained</div>
+      <div class="btn-desc">EM spectrum, absorption &amp; emission spectra</div>
+    </div>
+    <div class="section-btn s2 locked" id="btn-s2" onclick="goSection(2)">
+      <div class="btn-num">Section 02</div>
+      <div class="btn-title">Flame Test Lab</div>
+      <div class="btn-desc">Burn elements &amp; view their spectral fingerprints</div>
+      <span class="lock-icon" id="lock2">&#128274;</span>
+    </div>
+    <div class="section-btn s3 locked" id="btn-s3" onclick="goSection(3)">
+      <div class="btn-num">Section 03</div>
+      <div class="btn-title">Star Identification</div>
+      <div class="btn-desc">Identify elements in stars &amp; explore Doppler shift</div>
+      <span class="lock-icon" id="lock3">&#128274;</span>
+    </div>
+    <div class="section-btn quiz-btn locked" id="btn-quiz" onclick="goSection(4)">
+      <div class="btn-num">Final Quiz</div>
+      <div class="btn-title">Check For Understanding</div>
+      <div class="btn-desc">5 multiple choice questions &amp; final score</div>
+      <span class="lock-icon" id="lock-quiz">&#128274;</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 1: SPECTRUM EXPLAINED ===== -->
+
+<div id="s1-screen" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">BACK</button>
+    <div class="nav-title">Section 1 - The Spectrum</div>
+  </div>
+  <div class="section-content">
+
+```
+<div class="info-card">
+  <h2>What Is Light?</h2>
+  <p>Light is a form of electromagnetic (EM) radiation that travels as waves. The distance between wave peaks is called the <strong style="color:var(--accent)">wavelength</strong>, measured in nanometers (nm).</p>
+  <p>Visible light is only a tiny slice of the full EM spectrum. Below are the wavelengths we can see:</p>
+  <canvas id="em-canvas"></canvas>
+  <div class="wl-ruler">
+    <span>380 nm</span><span>440</span><span>500</span><span>560</span><span>620</span><span>680</span><span>700 nm</span>
+  </div>
+  <p style="margin-top:10px;">Different wavelengths appear as different colors. <strong style="color:#7f7fff">Violet</strong> has the shortest visible wavelength; <strong style="color:#ff4444">Red</strong> has the longest.</p>
+</div>
+
+<div class="info-card">
+  <h2>Continuous Spectrum</h2>
+  <p>When white light (like sunlight) passes through a prism, it spreads into a <strong style="color:var(--accent)">continuous spectrum</strong> - a smooth rainbow of all visible colors blending together with no gaps.</p>
+  <canvas id="continuous-canvas" style="width:100%;height:40px;display:block;border-radius:4px;margin:8px 0;"></canvas>
+  <p>This happens because the sun emits many different wavelengths of light at once.</p>
+</div>
+
+<div class="info-card">
+  <h2>Absorption Spectra</h2>
+  <p>When white light passes <em>through</em> a gas, atoms in the gas absorb specific wavelengths of light. This creates an <strong style="color:var(--accent)">absorption spectrum</strong> - a continuous rainbow with <strong style="color:#fff">dark lines</strong> where specific wavelengths were absorbed.</p>
+  <p>Think of it like this: each element has a unique set of "favorite" wavelengths it likes to absorb. The dark lines are like a fingerprint of that element.</p>
+  <canvas id="absorption-canvas" style="width:100%;height:50px;display:block;border-radius:4px;margin:8px 0;"></canvas>
+  <p style="font-size:12px;color:var(--dim);">Example: Hydrogen absorption - notice the dark gaps</p>
+</div>
+
+<div class="info-card">
+  <h2>Emission Spectra</h2>
+  <p>When a gas is heated or energized, its electrons jump to higher energy levels, then fall back down - releasing energy as light. This creates an <strong style="color:var(--accent)">emission spectrum</strong> - <strong style="color:#fff">bright colored lines</strong> on a black background.</p>
+  <p>The bright lines in an emission spectrum are at the <em>exact same wavelengths</em> as the dark lines in that element's absorption spectrum. Same fingerprint, just inverted!</p>
+  <canvas id="emission-canvas" style="width:100%;height:50px;display:block;border-radius:4px;margin:8px 0;"></canvas>
+  <p style="font-size:12px;color:var(--dim);">Example: Hydrogen emission - bright lines only</p>
+</div>
+
+<div class="info-card">
+  <h2>Why Are Spectra Unique?</h2>
+  <p>Every element has electrons arranged at specific energy levels. When electrons move between levels, they absorb or emit <em>only</em> the exact amount of energy matching that transition. Since each element has a unique electron arrangement, each element produces a <strong style="color:var(--accent)">unique spectral fingerprint</strong>.</p>
+  <p>Scientists use this to identify elements in distant stars, galaxies, and even the atmospheres of other planets - all from the light that reaches us!</p>
+</div>
+
+<button class="action-btn" onclick="completeSection(1)">COMPLETE SECTION 1 - UNLOCK FLAME TEST</button>
+```
+
+  </div>
+</div>
+
+<!-- ===== SECTION 2: FLAME TEST ===== -->
+
+<div id="s2-screen" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">BACK</button>
+    <div class="nav-title">Section 2 - Flame Test</div>
+  </div>
+  <div class="section-content">
+
+```
+<div class="info-card">
+  <h2>Flame Test Procedure</h2>
+  <p>In a flame test, a metal salt is placed on a wire loop and held in a flame. The heat excites electrons, producing light at wavelengths unique to that element.</p>
+  <p>Select an element below, then tap "DIP AND BURN" to see its flame color and emission spectrum.</p>
+</div>
+
+<div class="element-grid" id="elem-grid"></div>
+
+<button class="action-btn orange" id="dip-burn-btn" onclick="dipAndBurn()" style="margin:0 0 12px 0;opacity:0.35;pointer-events:none;">DIP AND BURN</button>
+
+<div style="background:#000;border:1px solid #333;border-radius:10px;overflow:hidden;margin-bottom:12px;">
+  <canvas id="flame-canvas" height="160"></canvas>
+</div>
+
+<div class="info-card" style="padding:12px;">
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:6px;">EMISSION SPECTRUM</div>
+  <div style="background:#000;border-radius:4px;overflow:hidden;">
+    <canvas id="spectra-canvas" height="70"></canvas>
+  </div>
+  <div class="wl-ruler" style="margin-top:4px;">
+    <span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span>
+  </div>
+  <div id="elem-info" style="margin-top:10px;font-size:12px;color:var(--dim);line-height:1.5;">Select an element to begin.</div>
+</div>
+
+<div id="mystery-section" style="display:none;">
+  <hr class="divider">
+  <div class="info-card">
+    <h2>Mystery Sample</h2>
+    <p>This unknown sample has been heated. Look at the emission spectrum below and compare it to the elements you tested. Which element is it?</p>
+    <div style="background:#000;border-radius:4px;overflow:hidden;margin:10px 0;">
+      <canvas id="mystery-canvas" style="width:100%;height:70px;display:block;" height="70"></canvas>
+    </div>
+    <div class="wl-ruler">
+      <span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span>
+    </div>
+    <p style="margin-top:10px;font-size:13px;">Which element does this mystery sample contain?</p>
+    <div class="mystery-checklist" id="mystery-list"></div>
+    <div class="feedback-box" id="mystery-feedback"></div>
+    <button class="action-btn orange" id="mystery-submit-btn" onclick="checkMystery()">CHECK MYSTERY SAMPLE</button>
+  </div>
+</div>
+
+<div id="s2-complete-area" style="display:none;">
+  <button class="action-btn" onclick="completeSection(2)">COMPLETE SECTION 2 - UNLOCK STAR LAB</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ===== SECTION 3: STARS ===== -->
+
+<div id="s3-screen" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">BACK</button>
+    <div class="nav-title">Section 3 - Star ID</div>
+  </div>
+  <div class="section-content">
+
+```
+<div class="info-card">
+  <h2>Reading Star Spectra</h2>
+  <p>Astronomers aim telescopes at stars and pass their light through a spectrograph. The resulting spectrum shows absorption lines - dark gaps where elements in the star's outer atmosphere absorbed specific wavelengths.</p>
+  <p>By matching these dark lines to known element fingerprints, we can identify exactly which elements are present - even in stars billions of light-years away!</p>
+</div>
+
+<!-- Stars container -->
+<div id="stars-container"></div>
+
+<!-- Redshift explainer -->
+<div class="info-card" id="redshift-card" style="display:none;">
+  <h2>Doppler Shift of Spectra</h2>
+  <p>Just like how an ambulance siren sounds higher-pitched when approaching and lower when moving away, light waves also shift based on motion.</p>
+  <p><strong style="color:#4488ff">Blue Shift:</strong> When a star moves <em>toward</em> us, its light waves are compressed - spectral lines shift toward shorter wavelengths (bluer).</p>
+  <p style="margin-top:8px;"><strong style="color:#ff4444">Red Shift:</strong> When a star moves <em>away</em> from us, its light waves are stretched - spectral lines shift toward longer wavelengths (redder).</p>
+  <p style="margin-top:8px;">The further the spectral lines shift from their normal position, the faster the star is moving.</p>
+</div>
+
+<!-- Interactive shift -->
+<div class="info-card" id="shift-interactive" style="display:none;">
+  <h2>Interactive Doppler Shift</h2>
+  <p style="font-size:12px;margin-bottom:10px;">Drag the slider to shift the spectrum. Compare where the lines <em>are</em> vs. where they <em>should be</em>.</p>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:4px;">REFERENCE (expected position)</div>
+  <div style="background:#000;border-radius:4px;overflow:hidden;">
+    <canvas id="ref-canvas" style="width:100%;height:50px;display:block;" height="50"></canvas>
+  </div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin:8px 0 4px;">OBSERVED (this star's spectrum)</div>
+  <div style="background:#000;border-radius:4px;overflow:hidden;">
+    <canvas id="redshift-canvas"></canvas>
+  </div>
+  <div class="wl-ruler" style="margin-top:4px;">
+    <span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span>
+  </div>
+  <div class="slider-wrap" style="margin-top:14px;">
+    <input type="range" id="shift-slider" min="-60" max="60" value="0" oninput="updateShift(this.value)">
+    <div class="shift-label" id="shift-label">No shift - stationary</div>
+  </div>
+  <p style="margin-top:14px;font-size:13px;font-weight:600;">Based on this star's spectrum shift, is it moving toward us or away from us?</p>
+  <div class="q-options" style="margin-top:10px;">
+    <button class="q-option" onclick="answerShift('toward')">Moving toward Earth (blue shift)</button>
+    <button class="q-option" onclick="answerShift('away')">Moving away from Earth (red shift)</button>
+    <button class="q-option" onclick="answerShift('none')">Not moving - no shift detected</button>
+  </div>
+  <div class="feedback-box" id="shift-feedback"></div>
+</div>
+
+<div id="s3-complete-area" style="display:none;">
+  <button class="action-btn green" onclick="completeSection(3)">COMPLETE SECTION 3 - UNLOCK QUIZ</button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ===== QUIZ ===== -->
+
+<div id="quiz-screen" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goBack()">BACK</button>
+    <div class="nav-title">Final Quiz</div>
+  </div>
+  <div class="section-content" id="quiz-content"></div>
+</div>
+
+<!-- ===== SCORE SCREEN ===== -->
+
+<div id="score-screen" class="screen">
+  <div class="top-nav">
+    <button class="back-btn" onclick="goSection(0)">HOME</button>
+    <div class="nav-title">Results</div>
+  </div>
+  <div id="score-content"></div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+// Wavelength to rough RGB (nm -> color)
+function wlToRGB(wl) {
+  var r=0,g=0,b=0,a=1;
+  if(wl>=380&&wl<440){r=(440-wl)/60;g=0;b=1;}
+  else if(wl>=440&&wl<490){r=0;g=(wl-440)/50;b=1;}
+  else if(wl>=490&&wl<510){r=0;g=1;b=(510-wl)/20;}
+  else if(wl>=510&&wl<580){r=(wl-510)/70;g=1;b=0;}
+  else if(wl>=580&&wl<645){r=1;g=(645-wl)/65;b=0;}
+  else if(wl>=645&&wl<=700){r=1;g=0;b=0;}
+  if(wl>=380&&wl<420)a=0.3+(wl-380)/40*0.7;
+  else if(wl>680&&wl<=700)a=0.7-(wl-680)/20*0.4;
+  var ri=Math.round(r*255),gi=Math.round(g*255),bi=Math.round(b*255);
+  return 'rgba('+ri+','+gi+','+bi+','+a+')';
+}
+
+// Element data: symbol, name, flame color, lines [{wl, strength}]
+var ELEMENTS = {
+  H:  { name:'Hydrogen',   flame:'#9999ff', flameHex:[0.25,0.35,0.75], lines:[{w:656,s:1},{w:486,s:0.7},{w:434,s:0.5},{w:410,s:0.3}], info:'Hydrogen has only 4 visible lines (Balmer series). The bright red line at 656nm is famous - called H-alpha.' },
+  He: { name:'Helium',     flame:'#ffd080', flameHex:[0.55,0.5,0.35],  lines:[{w:587,s:1},{w:667,s:0.8},{w:501,s:0.6},{w:447,s:0.4},{w:471,s:0.3}], info:'Helium was discovered in the sun\'s spectrum before it was found on Earth! Its yellow line at 587nm is distinctive.' },
+  Li: { name:'Lithium',    flame:'#ff2200', flameHex:[0.9,0.15,0.05],  lines:[{w:670,s:1},{w:610,s:0.6},{w:460,s:0.2}], info:'Lithium produces a brilliant crimson-red flame. The dominant line at 670nm is one of the most vivid in the visible spectrum.' },
+  Na: { name:'Sodium',     flame:'#ffaa00', flameHex:[0.9,0.6,0.0],    lines:[{w:589,s:1},{w:590,s:0.95},{w:819,s:0},{w:568,s:0.1}], info:'Sodium\'s famous double yellow lines (589nm, 590nm) - called the sodium D-lines - are so bright they dominate any flame test. Even tiny amounts glow intensely!' },
+  K:  { name:'Potassium',  flame:'#cc44ff', flameHex:[0.6,0.2,0.85],   lines:[{w:766,s:1},{w:769,s:0.9},{w:404,s:0.4},{w:693,s:0.3}], info:'Potassium gives a distinctive lilac/violet flame. The main lines are in the red-infrared range but secondary violet lines are visible.' },
+  Ca: { name:'Calcium',    flame:'#ff6600', flameHex:[0.9,0.35,0.05],  lines:[{w:616,s:1},{w:643,s:0.8},{w:526,s:0.5},{w:558,s:0.4},{w:422,s:0.3}], info:'Calcium produces a brick-orange flame. Its lines are spread across the visible spectrum, making it easy to identify in stellar spectra.' },
+  Sr: { name:'Strontium',  flame:'#ff1111', flameHex:[0.95,0.1,0.05],  lines:[{w:460,s:0.5},{w:487,s:0.6},{w:496,s:0.4},{w:641,s:1},{w:674,s:0.8}], info:'Strontium produces a brilliant crimson-red flame even brighter than lithium. It is used in red fireworks and emergency flares.' },
+  Ba: { name:'Barium',     flame:'#44ff44', flameHex:[0.2,0.85,0.2],   lines:[{w:524,s:1},{w:514,s:0.8},{w:554,s:0.7},{w:578,s:0.6},{w:614,s:0.4}], info:'Barium produces a distinctive apple-green flame - one of the most recognizable in flame tests. Used in green fireworks.' },
+  Cu: { name:'Copper',     flame:'#00ff88', flameHex:[0.1,0.8,0.5],    lines:[{w:510,s:1},{w:515,s:0.9},{w:521,s:0.7},{w:578,s:0.4},{w:450,s:0.3}], info:'Copper produces a blue-green flame. Its green lines around 510-521nm are characteristic. Used in blue and green fireworks.' },
+  Mg: { name:'Magnesium',  flame:'#ffffff', flameHex:[0.9,0.9,0.95],   lines:[{w:518,s:1},{w:517,s:0.9},{w:516,s:0.8},{w:383,s:0.4},{w:448,s:0.3}], info:'Magnesium burns with an intensely bright white flame. Its lines cluster around 516-518nm in the green region. Found abundantly in stars.' },
+  Fe: { name:'Iron',       flame:'#ff8800', flameHex:[0.85,0.45,0.05], lines:[{w:438,s:0.7},{w:495,s:0.6},{w:527,s:0.8},{w:542,s:1},{w:630,s:0.5},{w:396,s:0.4}], info:'Iron has hundreds of spectral lines across the visible range, making it one of the most complex elements. Its presence in aging stars signals nuclear fusion nearing its end.' },
+  O:  { name:'Oxygen',     flame:'#4488ff', flameHex:[0.2,0.45,0.95],  lines:[{w:615,s:0.8},{w:616,s:1},{w:645,s:0.6},{w:777,s:0},{w:437,s:0.4}], info:'Oxygen produces a blue/purple flame. Its lines are found throughout the spectrum. It is a critical marker in stellar and nebula spectroscopy.' }
+};
+
+// Star data
+var STARS = [
+  {
+    id:'sun', name:'Our Sun', desc:'G-type main sequence star, 1 AU away',
+    elements:['H','He','Ca','Mg','Fe'], mystery:false,
+    color:'#ffffd0',
+    fact:'The sun is mostly hydrogen and helium by mass, with trace metals like calcium, magnesium, and iron in its outer atmosphere creating absorption lines.'
+  },
+  {
+    id:'betelgeuse', name:'Betelgeuse', desc:'Red supergiant in Orion, ~700 light-years',
+    elements:['H','Fe','Ca','O'], mystery:false,
+    color:'#ff8866',
+    fact:'Betelgeuse is a red supergiant nearing the end of its life. Its strong iron and calcium lines indicate heavy element fusion occurring in its core.'
+  },
+  {
+    id:'sirius', name:'Sirius', desc:'Brightest star in the sky, ~8.6 light-years',
+    elements:['H','He','Mg'], mystery:false,
+    color:'#ccddff',
+    fact:'Sirius is a hot blue-white star. Its spectrum is dominated by strong hydrogen lines, with helium and magnesium also present.'
+  },
+  {
+    id:'mystery1', name:'Mystery Star Alpha', desc:'Unknown distant star - analyze spectrum to identify',
+    elements:['Na','Ca','Fe'], mystery:true,
+    color:'#ffaaaa',
+    fact:'Mystery Star Alpha contains sodium, calcium, and iron - a signature of a cooler, older star with heavy metal accumulation.'
+  },
+  {
+    id:'mystery2', name:'Mystery Star Beta', desc:'Unknown distant star - analyze spectrum to identify',
+    elements:['H','He','O'], mystery:true,
+    color:'#aaaaff',
+    fact:'Mystery Star Beta contains hydrogen, helium, and oxygen - typical of a hot young star with active stellar winds.'
+  }
+];
+
+// Shift demo: the "galaxy" has a redshift
+var SHIFT_ANSWER = 'away'; // moving away = redshift
+var shiftOffset = 30; // starts at +30 (redshifted)
+
+// Quiz questions
+var QUIZ = [
+  {
+    q: 'What does an absorption spectrum look like?',
+    opts: [
+      'Bright colored lines on a black background',
+      'A continuous rainbow with dark lines where wavelengths were absorbed',
+      'A completely black background with no lines',
+      'A single bright line at one wavelength'
+    ],
+    ans: 1
+  },
+  {
+    q: 'Why is each element\'s spectrum unique?',
+    opts: [
+      'Each element has a different temperature when heated',
+      'Each element has a unique electron arrangement, so electrons jump between different specific energy levels',
+      'Elements are made of different sized atoms',
+      'The color of the element determines its spectrum'
+    ],
+    ans: 1
+  },
+  {
+    q: 'Which element produces a bright yellow-orange flame and a famous pair of closely-spaced yellow emission lines?',
+    opts: ['Potassium', 'Copper', 'Sodium', 'Barium'],
+    ans: 2
+  },
+  {
+    q: 'A star\'s absorption lines are shifted toward shorter (bluer) wavelengths compared to reference. What does this mean?',
+    opts: [
+      'The star is moving away from Earth (red shift)',
+      'The star is very hot and young',
+      'The star is moving toward Earth (blue shift)',
+      'The star contains no hydrogen'
+    ],
+    ans: 2
+  },
+  {
+    q: 'How do astronomers identify elements in distant stars they can never visit?',
+    opts: [
+      'They send probes to collect samples',
+      'They measure how bright the star appears from Earth',
+      'They compare the star\'s absorption spectrum to known element fingerprints',
+      'They guess based on the color of the star'
+    ],
+    ans: 2
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+var state = {
+  name: '',
+  period: '',
+  done: [false, false, false],
+  currentSection: 0,
+  selectedElem: null,
+  burnedElems: {},
+  mysterySolved: false,
+  shiftAnswered: false,
+  starAnswers: {}, // starId -> {checked:[...], correct:false}
+  starsCorrect: 0,
+  quizAnswers: [],
+  quizScore: 0
+};
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(id);
+  el.classList.add('active');
+  el.scrollTop = 0;
+}
+
+function goBack() { showScreen('title-screen'); document.getElementById('notes-btn').classList.remove('visible'); if(notesOpen){ toggleNotes(); } }
+
+function goSection(n) {
+  var nm = document.getElementById('student-name').value.trim();
+  var pr = document.getElementById('student-period').value;
+  if(n > 0 && (!nm || !pr)) {
+    alert('Please enter your name and select your period first!');
+    return;
+  }
+  state.name = nm;
+  state.period = pr;
+
+  if(n === 1) { showScreen('s1-screen'); setTimeout(initSection1, 80); showNotesBtn(); }
+  else if(n === 2) {
+    if(!state.done[0]) { alert('Complete Section 1 first!'); return; }
+    showScreen('s2-screen');
+    initFlameTest(); showNotesBtn();
+  }
+  else if(n === 3) {
+    if(!state.done[1]) { alert('Complete Section 2 first!'); return; }
+    showScreen('s3-screen');
+    initStars(); showNotesBtn();
+  }
+  else if(n === 4) {
+    if(!state.done[2]) { alert('Complete Section 3 first!'); return; }
+    showScreen('quiz-screen');
+    initQuiz(); showNotesBtn();
+  }
+  else { showScreen('title-screen'); }
+}
+
+function completeSection(n) {
+  state.done[n-1] = true;
+  unlockNotes(n);
+  if(n === 1) {
+    var ub2 = document.getElementById('btn-s2');
+    if(ub2) ub2.classList.remove('locked');
+    var ul2 = document.getElementById('lock2');
+    if(ul2) ul2.remove();
+  } else if(n === 2) {
+    var ub3 = document.getElementById('btn-s3');
+    if(ub3) ub3.classList.remove('locked');
+    var ul3 = document.getElementById('lock3');
+    if(ul3) ul3.remove();
+  } else if(n === 3) {
+    var ubq = document.getElementById('btn-quiz');
+    if(ubq) ubq.classList.remove('locked');
+    var ulq = document.getElementById('lock-quiz');
+    if(ulq) ulq.remove();
+  }
+  goBack();
+}
+
+// ============================================================
+// DRAWING UTILITIES
+// ============================================================
+function drawVisibleSpectrum(canvas, h) {
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width;
+  var grad = ctx.createLinearGradient(0,0,w,0);
+  grad.addColorStop(0,    '#5500cc');
+  grad.addColorStop(0.1,  '#7f00ff');
+  grad.addColorStop(0.2,  '#0000ff');
+  grad.addColorStop(0.3,  '#0088ff');
+  grad.addColorStop(0.4,  '#00ffcc');
+  grad.addColorStop(0.5,  '#00ff44');
+  grad.addColorStop(0.6,  '#aaff00');
+  grad.addColorStop(0.7,  '#ffee00');
+  grad.addColorStop(0.8,  '#ff8800');
+  grad.addColorStop(0.9,  '#ff2200');
+  grad.addColorStop(1.0,  '#880000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,w,h || canvas.height);
+}
+
+function wlToX(wl, canvasW) {
+  return ((wl - 380) / 320) * canvasW;
+}
+
+function drawEmissionLines(canvas, lines, shift) {
+  shift = shift || 0;
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,w,h);
+  lines.forEach(function(l) {
+    var wl = l.w + shift;
+    if(wl < 375 || wl > 710) return;
+    var x = wlToX(wl, w);
+    var col = wlToRGB(wl);
+    var alpha = l.s;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // glow
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 0; // WKWebView safe - skip glow
+    var grd = ctx.createLinearGradient(x-2,0,x+2,0);
+    grd.addColorStop(0,'transparent');
+    grd.addColorStop(0.5,col);
+    grd.addColorStop(1,'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(x-3,0,6,h);
+    // center line
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = col;
+    ctx.fillRect(x-1,0,2,h);
+    ctx.restore();
+  });
+}
+
+function drawAbsorptionLines(canvas, lines) {
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  drawVisibleSpectrum(canvas, h);
+  lines.forEach(function(l) {
+    var x = wlToX(l.w, w);
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    ctx.fillRect(x-2,0,4,h);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(x-4,0,2,h);
+    ctx.fillRect(x+2,0,2,h);
+  });
+}
+
+// ============================================================
+// SECTION 1 INIT
+// ============================================================
+function initSection1() {
+  // EM spectrum canvas
+  var c = document.getElementById('em-canvas');
+  c.width = c.offsetWidth || 320;
+  c.height = 80;
+  var ctx = c.getContext('2d');
+  // Full EM spectrum (simplified)
+  var grad = ctx.createLinearGradient(0,0,c.width,0);
+  grad.addColorStop(0,'#330033');
+  grad.addColorStop(0.12,'#5500cc');
+  grad.addColorStop(0.18,'#7f00ff');
+  grad.addColorStop(0.22,'#0000ff');
+  grad.addColorStop(0.3,'#0088ff');
+  grad.addColorStop(0.38,'#00ffcc');
+  grad.addColorStop(0.45,'#00ff44');
+  grad.addColorStop(0.52,'#aaff00');
+  grad.addColorStop(0.6,'#ffee00');
+  grad.addColorStop(0.68,'#ff8800');
+  grad.addColorStop(0.75,'#ff2200');
+  grad.addColorStop(0.82,'#880000');
+  grad.addColorStop(1,'#220000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,10,c.width,50);
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.fillRect(0,10,c.width*0.1,50);
+  ctx.fillRect(c.width*0.88,10,c.width*0.12,50);
+  // labels
+  ctx.fillStyle='#ffffff88';
+  ctx.font='9px monospace';
+  ctx.fillText('UV',4,8);
+  ctx.fillText('VISIBLE',c.width*0.35,8);
+  ctx.fillText('Infrared',c.width*0.88,8);
+
+  // Continuous spectrum
+  var cc = document.getElementById('continuous-canvas');
+  cc.width = cc.offsetWidth || 320;
+  cc.height = 40;
+  drawVisibleSpectrum(cc, 40);
+
+  // Absorption
+  var ac = document.getElementById('absorption-canvas');
+  ac.width = ac.offsetWidth || 320;
+  ac.height = 50;
+  drawAbsorptionLines(ac, ELEMENTS['H'].lines);
+
+  // Emission
+  var ec = document.getElementById('emission-canvas');
+  ec.width = ec.offsetWidth || 320;
+  ec.height = 50;
+  drawEmissionLines(ec, ELEMENTS['H'].lines);
+}
+
+// ============================================================
+// SECTION 2: FLAME TEST
+// ============================================================
+var flameAnim = null;
+var flameTick = 0;
+var burnPhase = 0; // 0=idle, 1=dipping, 2=burning, 3=done
+
+function initFlameTest() {
+  // Build element grid
+  var grid = document.getElementById('elem-grid');
+  grid.innerHTML = '';
+  Object.keys(ELEMENTS).forEach(function(sym) {
+    var el = ELEMENTS[sym];
+    var div = document.createElement('div');
+    div.className = 'elem-btn';
+    div.id = 'ebtn-'+sym;
+    div.innerHTML = '<div class="elem-symbol" style="color:'+el.flame+'">'+sym+'</div><div class="elem-name">'+el.name+'</div>';
+    div.onclick = function(){ selectElement(sym); };
+    grid.appendChild(div);
+  });
+
+  // Size canvases
+  var fc = document.getElementById('flame-canvas');
+  fc.width = fc.offsetWidth || 320;
+  drawIdleFlame();
+
+  var sc = document.getElementById('spectra-canvas');
+  sc.width = sc.offsetWidth || 320;
+  var sctx = sc.getContext('2d');
+  sctx.fillStyle='#000';
+  sctx.fillRect(0,0,sc.width,sc.height);
+}
+
+function selectElement(sym) {
+  state.selectedElem = sym;
+  document.querySelectorAll('.elem-btn').forEach(function(b){ b.classList.remove('selected'); });
+  document.getElementById('ebtn-'+sym).classList.add('selected');
+  // Activate the dip-burn button
+  var btn = document.getElementById('dip-burn-btn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+  // Update info label
+  document.getElementById('elem-info').innerHTML = '<strong style="color:'+ELEMENTS[sym].flame+'">'+ELEMENTS[sym].name+' selected.</strong> Tap DIP AND BURN to test it!';
+}
+
+function dipAndBurn() {
+  if(!state.selectedElem) return;
+  burnElement(state.selectedElem);
+}
+
+function drawIdleFlame() {
+  var c = document.getElementById('flame-canvas');
+  var ctx = c.getContext('2d');
+  var w = c.width, h = c.height;
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,w,h);
+  // Wire
+  ctx.strokeStyle = '#888';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w/2, h);
+  ctx.lineTo(w/2, h*0.55);
+  ctx.stroke();
+  // Loop
+  ctx.beginPath();
+  ctx.arc(w/2, h*0.5, 8, 0, Math.PI*2);
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Label
+  ctx.fillStyle = '#444';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('Select an element then', w/2, h*0.2);
+  ctx.fillText('dip the wire to burn!', w/2, h*0.2+18);
+}
+
+var burnAnimFrame = null;
+function burnElement(sym) {
+  if(burnAnimFrame) cancelAnimationFrame(burnAnimFrame);
+  var el = ELEMENTS[sym];
+  var c = document.getElementById('flame-canvas');
+  c.width = c.offsetWidth || 320;
+  var w = c.width, h = c.height;
+  var t = 0;
+  var phase = 0; // 0=dip, 1=burn
+  state.burnedElems[sym] = true;
+
+  function frame() {
+    var ctx = c.getContext('2d');
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0,0,w,h);
+
+    // Wire
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 2;
+    var wireY = phase===0 ? h*0.9 - (t/30)*(h*0.35) : h*0.55;
+    ctx.beginPath();
+    ctx.moveTo(w/2, h);
+    ctx.lineTo(w/2, wireY+10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(w/2, wireY, 8, 0, Math.PI*2);
+    ctx.strokeStyle = '#bbb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if(phase === 1) {
+      // Draw flame
+      var r = parseInt(el.flame.slice(1,3),16);
+      var g = parseInt(el.flame.slice(3,5),16);
+      var b = parseInt(el.flame.slice(5,7),16);
+      var flicker = Math.sin(t*0.3)*0.15 + 0.85;
+      // Base flame
+      for(var i=0;i<6;i++){
+        var fw = (6-i)*18*flicker;
+        var fh = (i+1)*22*flicker;
+        var fy = wireY - fh;
+        var alpha = (6-i)/8;
+        ctx.fillStyle = 'rgba('+r+','+g+','+b+','+alpha+')';
+        var cx2 = w/2 + Math.sin(t*0.2+i)*4;
+        ctx.beginPath();
+        ctx.moveTo(cx2-fw/2, wireY);
+        ctx.quadraticCurveTo(cx2+fw*0.6, fy+fh*0.4, cx2, fy);
+        ctx.quadraticCurveTo(cx2-fw*0.6, fy+fh*0.4, cx2-fw/2, wireY);
+        ctx.fill();
+      }
+      // Inner hot core
+      ctx.fillStyle='rgba(255,255,220,0.5)';
+      ctx.beginPath();
+      ctx.moveTo(w/2-4, wireY);
+      ctx.quadraticCurveTo(w/2+6, wireY-30, w/2, wireY-55);
+      ctx.quadraticCurveTo(w/2-6, wireY-30, w/2-4, wireY);
+      ctx.fill();
+
+      // Color name
+      ctx.fillStyle = el.flame;
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(el.name + ' flame', w/2, 20);
+    }
+
+    t++;
+    if(phase===0 && t>=30) { phase=1; t=0; }
+    if(phase===1 && t < 120) {
+      burnAnimFrame = requestAnimationFrame(frame);
+    } else if(phase===1) {
+      // Show spectra
+      updateSpectraDisplay(sym);
+      checkMysteryReveal();
+    }
+  }
+  frame();
+}
+
+function updateSpectraDisplay(sym) {
+  var el = ELEMENTS[sym];
+  var sc = document.getElementById('spectra-canvas');
+  sc.width = sc.offsetWidth || 320;
+  drawEmissionLines(sc, el.lines);
+
+  var info = document.getElementById('elem-info');
+  info.innerHTML = '<strong style="color:'+el.flame+'">'+el.name+' ('+sym+')</strong><br>'+el.info;
+  info.innerHTML += '<br><br><span style="color:var(--dim)">Main lines: </span>';
+  el.lines.forEach(function(l){
+    info.innerHTML += '<span class="tag">'+l.w+'nm</span>';
+  });
+}
+
+function checkMysteryReveal() {
+  // Reveal mystery after burning at least 5 elements
+  var burned = Object.keys(state.burnedElems).length;
+  if(burned >= 5 && !document.getElementById('mystery-section').style.display.includes('block')) {
+    document.getElementById('mystery-section').style.display = 'block';
+    buildMysteryList();
+    drawMysteryCanvas();
+  }
+}
+
+var MYSTERY_ELEM = 'Ba'; // Mystery is Barium
+
+function drawMysteryCanvas() {
+  var mc = document.getElementById('mystery-canvas');
+  mc.width = mc.offsetWidth || 320;
+  drawEmissionLines(mc, ELEMENTS[MYSTERY_ELEM].lines);
+}
+
+function buildMysteryList() {
+  var list = document.getElementById('mystery-list');
+  list.innerHTML = '';
+  // Show all elements as options
+  Object.keys(ELEMENTS).forEach(function(sym) {
+    var div = document.createElement('div');
+    div.className = 'check-item';
+    div.id = 'mcheck-'+sym;
+    div.onclick = function(){ toggleMysteryCheck(sym); };
+    div.innerHTML = '<div class="check-box" id="mbox-'+sym+'"></div><span><strong>'+sym+'</strong> - '+ELEMENTS[sym].name+'</span>';
+    list.appendChild(div);
+  });
+}
+
+function toggleMysteryCheck(sym) {
+  var item = document.getElementById('mcheck-'+sym);
+  var box = document.getElementById('mbox-'+sym);
+  if(item.classList.contains('checked')) {
+    item.classList.remove('checked');
+    box.textContent = '';
+  } else {
+    item.classList.add('checked');
+    box.textContent = 'V';
+  }
+}
+
+function checkMystery() {
+  var checked = [];
+  Object.keys(ELEMENTS).forEach(function(sym){
+    if(document.getElementById('mcheck-'+sym) && document.getElementById('mcheck-'+sym).classList.contains('checked')) {
+      checked.push(sym);
+    }
+  });
+  var fb = document.getElementById('mystery-feedback');
+  if(checked.length === 1 && checked[0] === MYSTERY_ELEM) {
+    fb.className = 'feedback-box correct';
+    fb.textContent = 'Correct! The mystery sample is Barium (Ba). Its characteristic green lines at 514-524nm are a dead giveaway. Great spectral analysis!';
+    state.mysterySolved = true;
+    document.getElementById('s2-complete-area').style.display = 'block';
+    document.getElementById('mystery-submit-btn').disabled = true;
+  } else if(checked.includes(MYSTERY_ELEM) && checked.length > 1) {
+    fb.className = 'feedback-box nudge';
+    fb.textContent = 'Barium is in your selection, but you have too many elements checked. Look carefully at the green lines - only one element matches. Deselect the others.';
+  } else if(checked.length === 0) {
+    fb.className = 'feedback-box wrong';
+    fb.textContent = 'Please select at least one element from the list above.';
+  } else {
+    fb.className = 'feedback-box nudge';
+    fb.textContent = 'Not quite. Look at the strong lines around 514-524nm (green region) in the mystery spectrum. Which element you tested had prominent lines in that area? Go back and compare!';
+  }
+}
+
+// ============================================================
+// SECTION 3: STARS
+// ============================================================
+var s3State = {
+  starsAnswered: 0,
+  starsNeeded: 5,
+  redshiftAnswered: false
+};
+
+function initStars() {
+  var container = document.getElementById('stars-container');
+  container.innerHTML = '';
+  s3State.starsAnswered = 0;
+
+  STARS.forEach(function(star, idx) {
+    var card = document.createElement('div');
+    card.className = 'star-card';
+    card.id = 'star-card-'+star.id;
+
+    // Star canvas
+    var canvasId = 'star-canvas-'+star.id;
+
+    // Build checklist items
+    var allElems = Object.keys(ELEMENTS);
+    var checklistHtml = '';
+    allElems.forEach(function(sym){
+      checklistHtml += '<div class="check-item" id="sc-'+star.id+'-'+sym+'" onclick="toggleStarCheck(\''+star.id+'\',\''+sym+'\')">' +
+        '<div class="check-box" id="sb-'+star.id+'-'+sym+'"></div>' +
+        '<span><strong>'+sym+'</strong> - '+ELEMENTS[sym].name+'</span>' +
+        '</div>';
+    });
+
+    card.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:'+star.color+';flex-shrink:0;"></div>' +
+        '<div><div class="star-name">'+(star.mystery?'? ':'')+''+star.name+'</div>' +
+        '<div class="star-desc">'+star.desc+'</div></div>' +
+      '</div>' +
+      '<div style="background:#000;border-radius:4px;overflow:hidden;margin-bottom:8px;">' +
+        '<canvas id="'+canvasId+'" style="width:100%;height:55px;display:block;" height="55"></canvas>' +
+      '</div>' +
+      '<div class="wl-ruler" style="margin-bottom:10px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
+      (star.mystery ?
+        '<p style="font-size:13px;margin-bottom:10px;font-weight:600;">Which elements are in this star? Check all that apply:</p>' :
+        '<p style="font-size:13px;margin-bottom:10px;font-weight:600;">Identify the elements in this star\'s spectrum. Check all that apply:</p>'
+      ) +
+      '<div class="mystery-checklist" style="max-height:260px;overflow-y:auto;" id="scl-'+star.id+'">'+checklistHtml+'</div>' +
+      '<div class="feedback-box" id="sfb-'+star.id+'"></div>' +
+      '<button class="action-btn orange" id="sbtn-'+star.id+'" onclick="checkStarAnswer(\''+star.id+'\')">ANALYZE SPECTRUM</button>';
+
+    container.appendChild(card);
+
+    // Draw after appending
+    setTimeout(function() {
+      var c = document.getElementById(canvasId);
+      if(c) {
+        c.width = c.offsetWidth || 320;
+        // Build combined lines for this star
+        var allLines = [];
+        star.elements.forEach(function(sym){
+          ELEMENTS[sym].lines.forEach(function(l){
+            allLines.push(l);
+          });
+        });
+        drawAbsorptionLines(c, allLines);
+      }
+    }, 50);
+  });
+
+  // Show redshift section hidden until stars done
+  document.getElementById('redshift-card').style.display = 'none';
+  document.getElementById('shift-interactive').style.display = 'none';
+  document.getElementById('s3-complete-area').style.display = 'none';
+}
+
+function toggleStarCheck(starId, sym) {
+  var item = document.getElementById('sc-'+starId+'-'+sym);
+  var box = document.getElementById('sb-'+starId+'-'+sym);
+  if(!item) return;
+  if(item.classList.contains('checked')) {
+    item.classList.remove('checked');
+    box.textContent = '';
+  } else {
+    item.classList.add('checked');
+    box.textContent = 'V';
+  }
+}
+
+function checkStarAnswer(starId) {
+  var star = null;
+  STARS.forEach(function(s){ if(s.id === starId) star = s; });
+  if(!star) return;
+
+  var checked = [];
+  Object.keys(ELEMENTS).forEach(function(sym){
+    var item = document.getElementById('sc-'+starId+'-'+sym);
+    if(item && item.classList.contains('checked')) checked.push(sym);
+  });
+
+  var correct = star.elements.slice().sort();
+  var chosen = checked.slice().sort();
+
+  var missing = correct.filter(function(e){ return chosen.indexOf(e) === -1; });
+  var extra = chosen.filter(function(e){ return correct.indexOf(e) === -1; });
+
+  var fb = document.getElementById('sfb-'+starId);
+  var btn = document.getElementById('sbtn-'+starId);
+
+  if(missing.length === 0 && extra.length === 0) {
+    fb.className = 'feedback-box correct';
+    fb.textContent = 'Correct! This star contains: '+correct.join(', ')+'. '+star.fact;
+    btn.disabled = true;
+    s3State.starsAnswered++;
+    checkS3Progress();
+  } else if(missing.length > 0 && extra.length === 0) {
+    fb.className = 'feedback-box nudge';
+    fb.textContent = 'Almost there! You found some elements, but you are missing '+missing.length+' more. Look for absorption lines in the parts of the spectrum you have not matched yet.';
+  } else if(missing.length === 0 && extra.length > 0) {
+    fb.className = 'feedback-box nudge';
+    fb.textContent = 'You found all the right elements, but you have '+extra.length+' extra checked that are not present. Remove '+extra.join(', ')+' and try again.';
+  } else {
+    fb.className = 'feedback-box wrong';
+    fb.textContent = 'Not quite. You are missing some elements and have some extras. Compare the spectrum lines carefully to your flame test reference. ' + missing.length + ' element(s) are missing.';
+  }
+}
+
+function checkS3Progress() {
+  if(s3State.starsAnswered >= s3State.starsNeeded && !s3State.redshiftShown) {
+    s3State.redshiftShown = true;
+    document.getElementById('redshift-card').style.display = 'block';
+    document.getElementById('shift-interactive').style.display = 'block';
+    initRedshift();
+    setTimeout(function(){
+      document.getElementById('redshift-card').scrollIntoView({behavior:'smooth'});
+    }, 400);
+  }
+}
+
+function initRedshift() {
+  // Reference canvas: H lines at true positions
+  var rc = document.getElementById('ref-canvas');
+  rc.width = rc.offsetWidth || 320;
+  drawEmissionLines(rc, ELEMENTS['H'].lines, 0);
+
+  // Observed: shifted
+  var oc = document.getElementById('redshift-canvas');
+  oc.width = oc.offsetWidth || 320;
+  oc.height = 50;
+  drawEmissionLines(oc, ELEMENTS['H'].lines, shiftOffset);
+
+  document.getElementById('shift-slider').value = shiftOffset;
+  updateShiftLabel(shiftOffset);
+}
+
+function updateShift(val) {
+  val = parseInt(val);
+  var oc = document.getElementById('redshift-canvas');
+  drawEmissionLines(oc, ELEMENTS['H'].lines, val);
+  updateShiftLabel(val);
+}
+
+function updateShiftLabel(val) {
+  var lbl = document.getElementById('shift-label');
+  if(val > 5) {
+    lbl.style.color = '#ff6644';
+    lbl.textContent = 'Red shifted +' + val + 'nm - lines moved toward longer wavelengths';
+  } else if(val < -5) {
+    lbl.style.color = '#4488ff';
+    lbl.textContent = 'Blue shifted ' + val + 'nm - lines moved toward shorter wavelengths';
+  } else {
+    lbl.style.color = 'var(--accent)';
+    lbl.textContent = 'Near zero shift - star approximately stationary';
+  }
+}
+
+function answerShift(choice) {
+  if(s3State.redshiftAnswered) return;
+  var btns = document.querySelectorAll('#shift-interactive .q-option');
+  btns.forEach(function(b){ b.disabled = true; });
+  var fb = document.getElementById('shift-feedback');
+  var correct = SHIFT_ANSWER; // 'away'
+  if(choice === correct) {
+    btns.forEach(function(b){
+      if(b.textContent.toLowerCase().indexOf('away') > -1) b.classList.add('correct-ans');
+    });
+    fb.className = 'feedback-box correct';
+    fb.textContent = 'Correct! The spectral lines are shifted toward longer wavelengths (red shift), meaning this star is moving away from Earth. This is actually how astronomers discovered that the universe is expanding!';
+    s3State.redshiftAnswered = true;
+    document.getElementById('s3-complete-area').style.display = 'block';
+  } else {
+    btns.forEach(function(b){
+      if(b.textContent.toLowerCase().indexOf('away') > -1) b.classList.add('correct-ans');
+    });
+    var chosenBtn = null;
+    btns.forEach(function(b){
+      if((choice==='toward' && b.textContent.toLowerCase().indexOf('toward')>-1) ||
+         (choice==='none' && b.textContent.toLowerCase().indexOf('not moving')>-1)) {
+        chosenBtn = b;
+      }
+    });
+    if(chosenBtn) chosenBtn.classList.add('wrong-ans');
+    fb.className = 'feedback-box nudge';
+    fb.textContent = 'Not quite. Notice the lines are shifted toward the RED end (longer wavelengths). Red shift = moving away. If the lines shifted toward blue/violet, it would be moving toward us.';
+    // Allow retry
+    setTimeout(function(){
+      btns.forEach(function(b){ b.disabled = false; b.classList.remove('wrong-ans'); });
+      fb.style.display = 'none';
+    }, 3000);
+  }
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+var quizState = { current: 0, answers: [], done: false };
+
+function initQuiz() {
+  quizState = { current: 0, answers: new Array(QUIZ.length).fill(-1), done: false };
+  renderQuiz();
+}
+
+function renderQuiz() {
+  var content = document.getElementById('quiz-content');
+  var html = '';
+  QUIZ.forEach(function(q, qi) {
+    html += '<div class="quiz-q"><div class="q-num">QUESTION '+(qi+1)+' OF '+QUIZ.length+'</div>' +
+      '<div class="q-text">'+q.q+'</div>' +
+      '<div class="q-options">';
+    q.opts.forEach(function(opt, oi) {
+      var cls = 'q-option';
+      var dis = '';
+      if(quizState.answers[qi] !== -1) {
+        dis = 'disabled';
+        if(oi === q.ans) cls += ' correct-ans';
+        else if(oi === quizState.answers[qi] && oi !== q.ans) cls += ' wrong-ans';
+      }
+      html += '<button class="'+cls+'" '+dis+' onclick="answerQuiz('+qi+','+oi+')">'+opt+'</button>';
+    });
+    html += '</div></div>';
+  });
+
+  var allAnswered = quizState.answers.every(function(a){ return a !== -1; });
+  if(allAnswered) {
+    html += '<button class="action-btn" onclick="submitQuiz()">SEE MY FINAL SCORE</button>';
+  }
+  content.innerHTML = html;
+}
+
+function answerQuiz(qi, oi) {
+  if(quizState.answers[qi] !== -1) return;
+  quizState.answers[qi] = oi;
+  renderQuiz();
+}
+
+function submitQuiz() {
+  var score = 0;
+  quizState.answers.forEach(function(a, i){
+    if(a === QUIZ[i].ans) score++;
+  });
+  showScore(score);
+}
+
+// ============================================================
+// SCORE SCREEN
+// ============================================================
+function showScore(score) {
+  var pct = Math.round(score / QUIZ.length * 100);
+  var color = pct >= 80 ? 'var(--accent3)' : pct >= 60 ? 'var(--accent)' : 'var(--accent2)';
+  var msg = '';
+  if(pct === 100) msg = 'Perfect score! You have mastered spectral analysis. Astronomers around the world could use your skills!';
+  else if(pct >= 80) msg = 'Excellent work! You have a strong understanding of spectral fingerprints and how they are used in astronomy.';
+  else if(pct >= 60) msg = 'Good effort! Review the sections on absorption/emission spectra and Doppler shift to sharpen your understanding.';
+  else msg = 'Keep studying! Go back through the lab sections and pay special attention to how spectral lines identify elements.';
+
+  var html = '<div class="score-card">' +
+    '<div class="score-title">Lab Complete - Spectral Fingerprints</div>' +
+    '<div class="score-name">'+state.name+'</div>' +
+    '<div class="score-period">'+state.period+'</div>' +
+    '<div class="score-spectrum"></div>' +
+    '<div class="score-big" style="color:'+color+'">'+score+'/'+QUIZ.length+'</div>' +
+    '<div class="score-out-of">'+pct+'% Correct</div>' +
+    '<div class="score-msg">'+msg+'</div>' +
+    '<div class="screenshot-note">Take a screenshot of this page and submit to Canvas to receive credit for this lab.</div>' +
+    '</div>';
+
+  document.getElementById('score-content').innerHTML = html;
+  showScreen('score-screen');
+}
+
+// ============================================================
+// STARFIELD
+// ============================================================
+function initStarfield() {
+  var canvas = document.getElementById('starfield');
+  var W = canvas.width = window.innerWidth;
+  var H = canvas.height = window.innerHeight;
+  var ctx = canvas.getContext('2d');
+  var NUM = 120;
+  var stars = [];
+  for(var i = 0; i < NUM; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.4 + 0.3,
+      speed: Math.random() * 0.12 + 0.02,
+      alpha: Math.random() * 0.7 + 0.2,
+      twinkleSpeed: Math.random() * 0.025 + 0.008,
+      twinklePhase: Math.random() * Math.PI * 2
+    });
+  }
+  var tick = 0;
+  function drawStars() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, H);
+    tick += 0.016;
+    for(var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      s.twinklePhase += s.twinkleSpeed;
+      var a = s.alpha * (0.5 + 0.5 * Math.sin(s.twinklePhase));
+      // drift slowly downward then wrap
+      s.y += s.speed;
+      if(s.y > H + 2) { s.y = -2; s.x = Math.random() * W; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
+      ctx.fill();
+    }
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+  window.addEventListener('resize', function() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  });
+}
+
+// ============================================================
+// INIT ON LOAD
+// ============================================================
+window.addEventListener('load', function() {
+  initStarfield();
+});
+
+
+// ============================================================
+// NOTES LOG
+// ============================================================
+var notesOpen = false;
+var notesUnlocked = [false, false, false];
+
+function toggleNotes() {
+  notesOpen = !notesOpen;
+  var panel = document.getElementById('notes-panel');
+  if(notesOpen) {
+    panel.classList.add('open');
+    renderNotes();
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function showNotesBtn() {
+  document.getElementById('notes-btn').classList.add('visible');
+}
+
+function unlockNotes(section) {
+  notesUnlocked[section-1] = true;
+  renderNotes();
+}
+
+function renderNotes() {
+  var body = document.getElementById('notes-body');
+  var html = '';
+
+  // Section 1 notes always show once unlocked
+  if(notesUnlocked[0]) {
+    html += '<div class="note-section">';
+    html += '<div class="note-section-title">Section 1 - The Spectrum</div>';
+    html += '<div class="note-item"><strong>Wavelength:</strong> Distance between wave peaks, measured in <strong>nanometers (nm)</strong>. Visible light = 380-700nm.</div>';
+    html += '<div class="note-item"><strong>Continuous Spectrum:</strong> White light split into a smooth rainbow with NO gaps. All wavelengths present.</div>';
+    html += '<canvas class="note-diagram" id="nd-continuous" height="28"></canvas>';
+    html += '<div class="note-item"><strong>Absorption Spectrum:</strong> Rainbow WITH dark lines - atoms absorb specific wavelengths of light passing through them.</div>';
+    html += '<canvas class="note-diagram" id="nd-absorption" height="36"></canvas>';
+    html += '<div class="note-item"><strong>Emission Spectrum:</strong> Bright colored lines on BLACK background - atoms release light at specific wavelengths when heated.</div>';
+    html += '<canvas class="note-diagram" id="nd-emission" height="36"></canvas>';
+    html += '<div class="note-item"><strong>Key Rule:</strong> Each element has a UNIQUE spectral fingerprint. Same lines, every time - works like a barcode.</div>';
+    html += '</div>';
+  }
+
+  if(notesUnlocked[1]) {
+    html += '<div class="note-section">';
+    html += '<div class="note-section-title">Section 2 - Flame Tests</div>';
+    html += '<div class="note-item"><strong>Flame test:</strong> Heat a metal salt - electrons get excited, release light = emission spectrum.</div>';
+    html += '<canvas class="note-diagram" id="nd-flames" height="70"></canvas>';
+    html += '<div class="note-item">';
+    var flameList = [
+      ['H','656nm red line - Balmer series','#ff4444'],
+      ['He','587nm yellow - found in sun first','#ffd080'],
+      ['Li','670nm crimson red','#ff2200'],
+      ['Na','589nm BRIGHT yellow doublet','#ffaa00'],
+      ['K','404nm violet + red lines','#cc44ff'],
+      ['Ca','616nm orange, many lines','#ff6600'],
+      ['Sr','641nm deep red, used in flares','#ff1111'],
+      ['Ba','524nm apple green','#44ff44'],
+      ['Cu','510nm blue-green','#00ff88'],
+      ['Mg','518nm white/green, very bright','#ddddff'],
+      ['Fe','542nm + many lines, complex','#ff8800']
+    ];
+    flameList.forEach(function(f) {
+      html += '<span class="tag" style="border-color:'+f[2]+';color:'+f[2]+'">'+f[0]+'</span> '+f[1]+'<br>';
+    });
+    html += '</div>';
+    html += '</div>';
+  }
+
+  if(notesUnlocked[2]) {
+    html += '<div class="note-section">';
+    html += '<div class="note-section-title">Section 3 - Stars & Shift</div>';
+    html += '<div class="note-item"><strong>Star spectra</strong> show ABSORPTION lines - elements in the outer atmosphere absorb specific wavelengths.</div>';
+    html += '<div class="note-item">';
+    var starList = [
+      ['Sun','H, He, Ca, Mg, Fe'],
+      ['Betelgeuse','H, Fe, Ca, O - aging star'],
+      ['Sirius','H, He, Mg - hot young star']
+    ];
+    starList.forEach(function(s){
+      html += '<strong style="color:#fff">'+s[0]+':</strong> '+s[1]+'<br>';
+    });
+    html += '</div>';
+    html += '<canvas class="note-diagram" id="nd-shift" height="80"></canvas>';
+    html += '<div class="note-item"><strong>Blue Shift:</strong> Star moving TOWARD us - lines shift left (shorter wavelength).</div>';
+    html += '<div class="note-item"><strong>Red Shift:</strong> Star moving AWAY from us - lines shift right (longer wavelength). Universe is expanding!</div>';
+    html += '</div>';
+  }
+
+  if(!notesUnlocked[0]) {
+    html = '<div style="font-size:13px;color:var(--dim);text-align:center;padding:20px 0;">Complete Section 1 to start building your notes.</div>';
+  }
+
+  body.innerHTML = html;
+
+  // Draw diagrams after render
+  setTimeout(function() {
+    if(notesUnlocked[0]) {
+      drawNotesContinuous();
+      drawNotesAbsorption();
+      drawNotesEmission();
+    }
+    if(notesUnlocked[1]) {
+      drawNotesFlames();
+    }
+    if(notesUnlocked[2]) {
+      drawNotesShift();
+    }
+  }, 30);
+}
+
+function drawNotesContinuous() {
+  var c = document.getElementById('nd-continuous');
+  if(!c) return;
+  c.width = c.offsetWidth || 300;
+  drawVisibleSpectrum(c, c.height);
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.fillRect(0,0,c.width,10);
+  ctx.fillStyle='#fff';
+  ctx.font='8px monospace';
+  ctx.fillText('CONTINUOUS - all wavelengths, no gaps', 4, 8);
+}
+
+function drawNotesAbsorption() {
+  var c = document.getElementById('nd-absorption');
+  if(!c) return;
+  c.width = c.offsetWidth || 300;
+  drawAbsorptionLines(c, ELEMENTS['H'].lines);
+  var ctx = c.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  ctx.fillRect(0,0,c.width,11);
+  ctx.fillStyle='#fff';
+  ctx.font='8px monospace';
+  ctx.fillText('ABSORPTION - rainbow with dark gaps (H shown)', 4, 9);
+}
+
+function drawNotesEmission() {
+  var c = document.getElementById('nd-emission');
+  if(!c) return;
+  c.width = c.offsetWidth || 300;
+  drawEmissionLines(c, ELEMENTS['H'].lines);
+  var ctx = c.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0.6)';
+  ctx.fillRect(0,0,c.width,11);
+  ctx.fillStyle='#fff';
+  ctx.font='8px monospace';
+  ctx.fillText('EMISSION - bright lines on black (H shown)', 4, 9);
+}
+
+function drawNotesFlames() {
+  var c = document.getElementById('nd-flames');
+  if(!c) return;
+  c.width = c.offsetWidth || 300;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0,0,c.width,c.height);
+  var elems = ['H','He','Li','Na','K','Ca','Sr','Ba','Cu','Mg','Fe'];
+  var cols = c.width / elems.length;
+  elems.forEach(function(sym, i) {
+    var el = ELEMENTS[sym];
+    var cx = i * cols + cols/2;
+    // simple flame shape
+    var r = parseInt(el.flame.slice(1,3),16);
+    var g = parseInt(el.flame.slice(3,5),16);
+    var b = parseInt(el.flame.slice(5,7),16);
+    ctx.fillStyle = 'rgba('+r+','+g+','+b+',0.7)';
+    ctx.beginPath();
+    ctx.moveTo(cx-6, c.height-2);
+    ctx.quadraticCurveTo(cx+7, c.height-20, cx, c.height-42);
+    ctx.quadraticCurveTo(cx-7, c.height-20, cx-6, c.height-2);
+    ctx.fill();
+    // label
+    ctx.fillStyle = el.flame;
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(sym, cx, c.height-1);
+  });
+}
+
+function drawNotesShift() {
+  var c = document.getElementById('nd-shift');
+  if(!c) return;
+  c.width = c.offsetWidth || 300;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,c.width,c.height);
+  var h = c.height;
+  var w = c.width;
+  // Labels
+  ctx.font = '9px monospace';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'left';
+  ctx.fillText('Reference (at rest):', 4, 12);
+  ctx.fillText('Blue shifted (toward):', 4, 38);
+  ctx.fillText('Red shifted (away):', 4, 64);
+  // Reference lines
+  var refLines = ELEMENTS['H'].lines.slice(0,3);
+  refLines.forEach(function(l) {
+    var x = wlToX(l.w, w);
+    ctx.fillStyle = wlToRGB(l.w);
+    ctx.fillRect(x-1, 14, 2, 14);
+  });
+  // Blue shifted
+  refLines.forEach(function(l) {
+    var x = wlToX(l.w - 30, w);
+    ctx.fillStyle = '#4488ff';
+    ctx.fillRect(x-1, 40, 2, 14);
+  });
+  // Red shifted
+  refLines.forEach(function(l) {
+    var x = wlToX(l.w + 30, w);
+    ctx.fillStyle = '#ff4444';
+    ctx.fillRect(x-1, 66, 2, 14);
+  });
+  // Arrows
+  ctx.strokeStyle = '#4488ff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w*0.72, 47);
+  ctx.lineTo(w*0.62, 47);
+  ctx.stroke();
+  ctx.fillStyle = '#4488ff';
+  ctx.fillText('<-- toward shorter wl', w*0.45, 75);
+  ctx.strokeStyle = '#ff4444';
+  ctx.beginPath();
+  ctx.moveTo(w*0.72, 73);
+  ctx.lineTo(w*0.82, 73);
+  ctx.stroke();
+}
+
+</script>
+
+<!-- ===== NOTES BUTTON ===== -->
+
+<button id="notes-btn" onclick="toggleNotes()" title="Lab Notes">📒</button>
+
+<!-- ===== NOTES PANEL ===== -->
+
+<div id="notes-panel">
+  <div class="notes-header">
+    <div class="notes-title">LAB NOTES</div>
+    <button class="notes-close" onclick="toggleNotes()">CLOSE</button>
+  </div>
+  <div class="notes-body" id="notes-body">
+    <div style="font-size:13px;color:var(--dim);text-align:center;padding:20px 0;">
+      Complete sections to unlock notes here.<br>Use these to study for the quiz!
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
