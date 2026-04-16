@@ -2215,14 +2215,10 @@ function checkTeacherCode() {
 }
 
 function teacherUnlock() {
-  if (!document.getElementById('student-name').value.trim()) {
-    document.getElementById('student-name').value = 'Teacher Preview';
-  }
-  if (!document.getElementById('student-period').value) {
-    document.getElementById('student-period').value = 'Period 1';
-  }
-  state.name = document.getElementById('student-name').value.trim();
-  state.period = document.getElementById('student-period').value;
+  // Use whatever the student name/period fields have, or fall back internally
+  // without auto-filling the visible fields (to avoid students noticing)
+  state.name = document.getElementById('student-name').value.trim() || 'Teacher';
+  state.period = document.getElementById('student-period').value || 'Teacher';
 
   state.done[0] = true;
   state.done[1] = true;
