@@ -608,6 +608,22 @@ background: linear-gradient(to right,
 #00ff00, #ffff00, #ff8800, #ff0000);
 }
 
+/* ===== ELEMENT COMPARE CARDS (Section 3) ===== */
+.elem-compare-card {
+background: var(--panel);
+border: 1px solid var(--border);
+border-radius: 6px;
+padding: 5px 3px 4px;
+cursor: pointer;
+transition: border-color 0.15s, background 0.15s;
+text-align: center;
+}
+.elem-compare-card.checked {
+border-color: var(--accent);
+background: #001c3a;
+}
+.elem-compare-card:active { opacity: 0.8; }
+
 /* Dividers */
 .divider {
 border: none;
@@ -1038,9 +1054,9 @@ var ELEMENTS = {
 var STARS = [
   {
     id:'sun', name:'Our Sun', desc:'G-type main sequence star, 1 AU away',
-    elements:['H','He','Ca','Mg','Fe'], mystery:false,
+    elements:['H','He','Ca','Fe'], mystery:false,
     color:'#ffffd0',
-    fact:'The sun is mostly hydrogen and helium by mass, with trace metals like calcium, magnesium, and iron in its outer atmosphere creating absorption lines.'
+    fact:'The sun is mostly hydrogen and helium by mass, with trace metals like calcium and iron in its outer atmosphere creating bright emission lines.'
   },
   {
     id:'betelgeuse', name:'Betelgeuse', desc:'Red supergiant in Orion, ~700 light-years',
@@ -1626,77 +1642,94 @@ function initStars() {
   container.innerHTML = '';
   s3State.starsAnswered = 0;
 
-  STARS.forEach(function(star, idx) {
+  STARS.forEach(function(star) {
     var card = document.createElement('div');
     card.className = 'star-card';
-    card.id = 'star-card-'+star.id;
+    card.id = 'star-card-' + star.id;
+    var canvasId = 'star-canvas-' + star.id;
 
-    // Star canvas
-    var canvasId = 'star-canvas-'+star.id;
-
-    // Build checklist items
-    var allElems = Object.keys(ELEMENTS);
-    var checklistHtml = '';
-    allElems.forEach(function(sym){
-      checklistHtml += '<div class="check-item" id="sc-'+star.id+'-'+sym+'" onclick="toggleStarCheck(\''+star.id+'\',\''+sym+'\')">' +
-        '<div class="check-box" id="sb-'+star.id+'-'+sym+'"></div>' +
-        '<span><strong>'+sym+'</strong> - '+ELEMENTS[sym].name+'</span>' +
+    // Build element comparison cards (one per element, each with its own spectrum)
+    var elemCardsHtml = '';
+    Object.keys(ELEMENTS).forEach(function(sym) {
+      var el = ELEMENTS[sym];
+      elemCardsHtml +=
+        '<div class="elem-compare-card" id="sc-' + star.id + '-' + sym + '" onclick="toggleStarCheck(\'' + star.id + '\',\'' + sym + '\')">' +
+          '<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;font-weight:700;color:' + el.flame + ';">' + sym + '</div>' +
+          '<div style="background:#000;border-radius:3px;overflow:hidden;margin:3px 0 2px;">' +
+            '<canvas id="espec-' + star.id + '-' + sym + '" style="width:100%;height:22px;display:block;" height="22"></canvas>' +
+          '</div>' +
+          '<div style="font-size:8px;color:var(--dim);font-family:\'Share Tech Mono\',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + el.name + '</div>' +
+          '<div style="width:14px;height:14px;border:1px solid var(--border);border-radius:3px;margin:3px auto 0;display:flex;align-items:center;justify-content:center;font-size:10px;" id="sb-' + star.id + '-' + sym + '"></div>' +
         '</div>';
     });
 
     card.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
-        '<div style="width:22px;height:22px;border-radius:50%;background:'+star.color+';flex-shrink:0;"></div>' +
-        '<div><div class="star-name">'+(star.mystery?'? ':'')+''+star.name+'</div>' +
-        '<div class="star-desc">'+star.desc+'</div></div>' +
+        '<div style="width:20px;height:20px;border-radius:50%;background:' + star.color + ';flex-shrink:0;box-shadow:0 0 8px ' + star.color + '55;"></div>' +
+        '<div>' +
+          '<div class="star-name">' + (star.mystery ? '<span style="color:var(--dim)">? </span>' : '') + star.name + '</div>' +
+          '<div class="star-desc">' + star.desc + '</div>' +
+        '</div>' +
       '</div>' +
-      '<div style="background:#000;border-radius:4px;overflow:hidden;margin-bottom:8px;">' +
-        '<canvas id="'+canvasId+'" style="width:100%;height:55px;display:block;" height="55"></canvas>' +
+      '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--accent);margin-bottom:4px;">STAR EMISSION SPECTRUM</div>' +
+      '<div style="background:#000;border-radius:4px;overflow:hidden;margin-bottom:3px;">' +
+        '<canvas id="' + canvasId + '" style="width:100%;height:60px;display:block;" height="60"></canvas>' +
       '</div>' +
-      '<div class="wl-ruler" style="margin-bottom:10px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
-      (star.mystery ?
-        '<p style="font-size:13px;margin-bottom:10px;font-weight:600;">Which elements are in this star? Check all that apply:</p>' :
-        '<p style="font-size:13px;margin-bottom:10px;font-weight:600;">Identify the elements in this star\'s spectrum. Check all that apply:</p>'
-      ) +
-      '<div class="mystery-checklist" style="max-height:260px;overflow-y:auto;" id="scl-'+star.id+'">'+checklistHtml+'</div>' +
-      '<div class="feedback-box" id="sfb-'+star.id+'"></div>' +
-      '<button class="action-btn orange" id="sbtn-'+star.id+'" onclick="checkStarAnswer(\''+star.id+'\')">ANALYZE SPECTRUM</button>';
+      '<div class="wl-ruler" style="margin-bottom:14px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
+      '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:8px;">COMPARE TO ELEMENTS — CHECK ALL THAT MATCH THE STAR\'S SPECTRUM:</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px;" id="scl-' + star.id + '">' +
+        elemCardsHtml +
+      '</div>' +
+      '<div class="feedback-box" id="sfb-' + star.id + '"></div>' +
+      '<button class="action-btn orange" id="sbtn-' + star.id + '" onclick="checkStarAnswer(\'' + star.id + '\')">IDENTIFY ELEMENTS</button>';
 
     container.appendChild(card);
 
-    // Draw after appending
-    setTimeout(function() {
-      var c = document.getElementById(canvasId);
-      if(c) {
-        c.width = c.offsetWidth || 320;
-        // Build combined lines for this star
-        var allLines = [];
-        star.elements.forEach(function(sym){
-          ELEMENTS[sym].lines.forEach(function(l){
-            allLines.push(l);
+    // Draw all canvases after the card is in the DOM
+    // Use IIFE to capture star reference correctly
+    setTimeout((function(s) {
+      return function() {
+        var c = document.getElementById('star-canvas-' + s.id);
+        if (c) {
+          c.width = c.offsetWidth || 320;
+          var allLines = [];
+          s.elements.forEach(function(sym) {
+            ELEMENTS[sym].lines.forEach(function(l) { allLines.push(l); });
           });
+          drawEmissionLines(c, allLines);
+        }
+        Object.keys(ELEMENTS).forEach(function(sym) {
+          var ec = document.getElementById('espec-' + s.id + '-' + sym);
+          if (ec) {
+            ec.width = ec.offsetWidth || 90;
+            drawEmissionLines(ec, ELEMENTS[sym].lines);
+          }
         });
-        drawAbsorptionLines(c, allLines);
-      }
-    }, 50);
+      };
+    })(star), 80);
   });
 
-  // Show redshift section hidden until stars done
   document.getElementById('redshift-card').style.display = 'none';
   document.getElementById('shift-interactive').style.display = 'none';
   document.getElementById('s3-complete-area').style.display = 'none';
 }
 
 function toggleStarCheck(starId, sym) {
-  var item = document.getElementById('sc-'+starId+'-'+sym);
-  var box = document.getElementById('sb-'+starId+'-'+sym);
-  if(!item) return;
-  if(item.classList.contains('checked')) {
+  var item = document.getElementById('sc-' + starId + '-' + sym);
+  var box = document.getElementById('sb-' + starId + '-' + sym);
+  if (!item) return;
+  if (item.classList.contains('checked')) {
     item.classList.remove('checked');
     box.textContent = '';
+    box.style.background = 'transparent';
+    box.style.borderColor = '';
+    box.style.color = '';
   } else {
     item.classList.add('checked');
-    box.textContent = 'V';
+    box.textContent = '\u2713';
+    box.style.background = 'var(--accent)';
+    box.style.borderColor = 'var(--accent)';
+    box.style.color = '#000';
   }
 }
 
@@ -1728,13 +1761,13 @@ function checkStarAnswer(starId) {
     checkS3Progress();
   } else if(missing.length > 0 && extra.length === 0) {
     fb.className = 'feedback-box nudge';
-    fb.textContent = 'Almost there! You found some elements, but you are missing '+missing.length+' more. Look for absorption lines in the parts of the spectrum you have not matched yet.';
+    fb.textContent = 'Almost there! You found some elements, but you are missing '+missing.length+' more. Compare the star\'s bright lines to the element spectra below - look for lines in the same positions.';
   } else if(missing.length === 0 && extra.length > 0) {
     fb.className = 'feedback-box nudge';
     fb.textContent = 'You found all the right elements, but you have '+extra.length+' extra checked that are not present. Remove '+extra.join(', ')+' and try again.';
   } else {
     fb.className = 'feedback-box wrong';
-    fb.textContent = 'Not quite. You are missing some elements and have some extras. Compare the spectrum lines carefully to your flame test reference. ' + missing.length + ' element(s) are missing.';
+    fb.textContent = 'Not quite. Compare the star\'s emission lines to each element\'s spectrum - when lines line up at the same wavelengths, that element is present. ' + missing.length + ' element(s) are still missing.';
   }
 }
 
