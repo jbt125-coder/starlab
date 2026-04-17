@@ -142,6 +142,34 @@ box-shadow: var(--glow);
 }
 .input-panel select option { background: #0a1628; }
 
+.period-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 6px;
+margin-top: 4px;
+}
+.period-btn {
+background: var(--panel);
+border: 1px solid var(--border);
+border-radius: 8px;
+color: var(--dim);
+font-family: 'Orbitron', sans-serif;
+font-size: 11px;
+font-weight: 700;
+padding: 11px 4px;
+cursor: pointer;
+transition: all 0.15s;
+text-align: center;
+letter-spacing: 1px;
+}
+.period-btn.selected {
+border-color: var(--accent);
+background: #001c3a;
+color: var(--accent);
+box-shadow: 0 0 8px #00d4ff44;
+}
+.period-btn:active { transform: scale(0.95); }
+
 .section-buttons {
 width: 100%;
 max-width: 380px;
@@ -774,16 +802,16 @@ background: #000;
     <label>Student Name</label>
     <input type="text" id="student-name" placeholder="First Last" autocomplete="off" />
     <label>Class Period</label>
-    <select id="student-period">
-      <option value="">-- Select Period --</option>
-      <option>Period 1</option>
-      <option>Period 2</option>
-      <option>Period 3</option>
-      <option>Period 4</option>
-      <option>Period 5</option>
-      <option>Period 6</option>
-      <option>Period 7</option>
-    </select>
+    <input type="hidden" id="student-period" value="" />
+    <div class="period-grid">
+      <button class="period-btn" onclick="selectPeriod('Period 1',this)">P 1</button>
+      <button class="period-btn" onclick="selectPeriod('Period 2',this)">P 2</button>
+      <button class="period-btn" onclick="selectPeriod('Period 3',this)">P 3</button>
+      <button class="period-btn" onclick="selectPeriod('Period 4',this)">P 4</button>
+      <button class="period-btn" onclick="selectPeriod('Period 5',this)">P 5</button>
+      <button class="period-btn" onclick="selectPeriod('Period 6',this)">P 6</button>
+      <button class="period-btn" onclick="selectPeriod('Period 7',this)">P 7</button>
+    </div>
   </div>
 
   <div class="section-buttons">
@@ -1163,6 +1191,12 @@ function showScreen(id) {
   var el = document.getElementById(id);
   el.classList.add('active');
   el.scrollTop = 0;
+}
+
+function selectPeriod(val, btn) {
+  document.getElementById('student-period').value = val;
+  document.querySelectorAll('.period-btn').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
 }
 
 function goBack() { showScreen('title-screen'); document.getElementById('notes-btn').classList.remove('visible'); if(notesOpen){ toggleNotes(); } }
@@ -1659,7 +1693,10 @@ function initStars() {
               '<span style="font-family:\'Orbitron\',sans-serif;font-size:12px;font-weight:700;color:' + el.flame + ';">' + sym + '</span>' +
               '<span style="font-size:11px;color:var(--dim);font-family:\'Share Tech Mono\',monospace;margin-left:6px;">' + el.name + '</span>' +
             '</div>' +
-            '<div style="width:16px;height:16px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;" id="sb-' + star.id + '-' + sym + '"></div>' +
+            '<div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">' +
+              '<button onclick="event.stopPropagation();eliminateStar(\'' + star.id + '\',\'' + sym + '\')" title="Move to bottom" style="background:none;border:1px solid #333;border-radius:4px;color:#555;font-size:11px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;line-height:1;">\u2715</button>' +
+              '<div style="width:16px;height:16px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;" id="sb-' + star.id + '-' + sym + '"></div>' +
+            '</div>' +
           '</div>' +
           '<div style="background:#000;border-radius:3px;overflow:hidden;">' +
             '<canvas id="espec-' + star.id + '-' + sym + '" style="width:100%;height:60px;display:block;" height="60"></canvas>' +
@@ -1668,24 +1705,23 @@ function initStars() {
     });
 
     card.innerHTML =
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
         '<div style="width:20px;height:20px;border-radius:50%;background:' + star.color + ';flex-shrink:0;box-shadow:0 0 8px ' + star.color + '55;"></div>' +
         '<div>' +
           '<div class="star-name">' + (star.mystery ? '<span style="color:var(--dim)">? </span>' : '') + star.name + '</div>' +
           '<div class="star-desc">' + star.desc + '</div>' +
         '</div>' +
       '</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.5;margin-bottom:10px;padding:9px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">' +
+        '<strong style="color:var(--accent);">How to identify:</strong> Tap an element below — it jumps directly under the star\'s spectrum so you can compare lines side by side. ' +
+        'Matching lines at the same position = that element is present. Tap <strong style="color:#555;">\u2715</strong> to send an element to the bottom. ' +
+        'Check every match, then tap <strong style="color:var(--accent2);">IDENTIFY ELEMENTS</strong>.' +
+      '</div>' +
       '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--accent);margin-bottom:4px;">STAR EMISSION SPECTRUM</div>' +
       '<div style="background:#000;border-radius:4px;overflow:hidden;margin-bottom:3px;">' +
         '<canvas id="' + canvasId + '" style="width:100%;height:60px;display:block;" height="60"></canvas>' +
       '</div>' +
-      '<div class="wl-ruler" style="margin-bottom:14px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
-      '<div style="font-family:\'Share Tech Mono\',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);margin-bottom:6px;">COMPARE ELEMENTS</div>' +
-      '<div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:10px;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">' +
-        '<strong style="color:var(--accent);">How to identify:</strong> Tap any element below — it will jump to the top, directly under the star\'s spectrum, so you can line up the bright emission lines side by side. ' +
-        'When an element\'s lines appear at the same positions as the star\'s lines, that element is present. ' +
-        'Check every matching element, then tap <strong style="color:var(--accent2);">IDENTIFY ELEMENTS</strong> when you\'re done.' +
-      '</div>' +
+      '<div class="wl-ruler" style="margin-bottom:10px;"><span>380</span><span>440</span><span>500</span><span>560</span><span>620</span><span>660</span><span>700nm</span></div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;" id="scl-' + star.id + '">' +
         elemCardsHtml +
       '</div>' +
@@ -1758,6 +1794,20 @@ function toggleStarCheck(starId, sym) {
       if (sc) sc.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
   }
+}
+
+function eliminateStar(starId, sym) {
+  var item = document.getElementById('sc-' + starId + '-' + sym);
+  var list = document.getElementById('scl-' + starId);
+  if (!item || !list) return;
+  list.appendChild(item);
+  setTimeout(function() {
+    var ec = document.getElementById('espec-' + starId + '-' + sym);
+    if (ec) {
+      ec.width = ec.offsetWidth || 320;
+      drawEmissionLines(ec, ELEMENTS[sym].lines);
+    }
+  }, 0);
 }
 
 function checkStarAnswer(starId) {
